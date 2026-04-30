@@ -1,0 +1,29 @@
+{
+  "name": "obsidian_pro",
+  "version": "1.0.0",
+  "description": "College-exclusive mentorship and collaboration platform for VNR VJIET combining WhatsApp-style communities with LinkedIn-style profiles. Focus: verified contributions, fair referrals, and transparent scoring.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"No automated tests defined\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "firebase-admin": "^13.6.0",
+    "i": "^0.3.7",
+    "socket.io": "^4.8.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dilip-22r/Obsidian_pro.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Dilip-22r/Obsidian_pro/issues"
+  },
+  "homepage": "https://github.com/Dilip-22r/Obsidian_pro#readme"
+}
