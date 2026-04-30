@@ -168,14 +168,15 @@ function Messages() {
       const data = await fetchApi(`/messages/${userId}`);
       if(Array.isArray(data)) {
         setMessages(data);
-        markAsSeen(userId);
+        // Use fetchApi for marking as seen
+        await fetchApi(`/messages/mark-seen/${userId}`, { method: 'PUT' });
       }
     } catch (error) {
       console.error('Failed to fetch messages:', error);
       showNotification('Failed to load messages');
     }
     setLoading(false);
-  }, [user?.id, setMessages, markAsSeen, showNotification]);
+  }, [user?.id, setMessages, showNotification]);
 
   const handleSend = useCallback(async (e) => {
     e.preventDefault();
@@ -198,12 +199,11 @@ function Messages() {
       setText('');
       setReplyTo(null);
       fetchConversations();
-      sendMessage(messageData);
     } catch (error) {
       console.error('Failed to send message:', error);
       showNotification('Failed to send message');
     }
-  }, [text, selectedUserId, user?.id, replyTo, addMessage, fetchConversations, sendMessage, showNotification]);
+  }, [text, selectedUserId, user?.id, replyTo, addMessage, fetchConversations, showNotification]);
 
   const handleReply = useCallback((message) => {
     setReplyTo({
@@ -215,13 +215,20 @@ function Messages() {
     inputRef.current?.focus();
   }, []);
 
-  const handleDelete = useCallback((messageId, deleteType) => {
-    deleteMessage(messageId, deleteType);
-    if (deleteType === 'everyone') {
+  const handleDelete = useCallback(async (messageId, deleteType) => {
+    try {
+      if (deleteType === 'everyone') {
+        await fetchApi(`/messages/${messageId}`, { method: 'DELETE' });
+      } else {
+        await fetchApi(`/messages/${messageId}/for-me`, { method: 'DELETE' });
+      }
       markMessageDeleted(messageId);
+    } catch (error) {
+      console.error('Failed to delete message:', error);
+      showNotification('Failed to delete message');
     }
     setContextMenu(null);
-  }, [deleteMessage, markMessageDeleted]);
+  }, [markMessageDeleted, showNotification]);
 
   const handleContextMenu = useCallback((e, message) => {
     e.preventDefault();

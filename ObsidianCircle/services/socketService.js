@@ -28,28 +28,6 @@ function initializeSocketIO(server) {
     // Emit online users list to all clients
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
-    // Handle marking messages as seen
-    socket.on("mark_seen", async ({ viewerId, partnerId }) => {
-      // Security: Ensure the socket taking the action actually belongs to the viewer
-      if (String(userId) !== String(viewerId)) {
-        console.warn(`[SECURITY] Socket ${socket.id} attempted to mark messages seen for user ${viewerId}`);
-        return;
-      }
-
-      try {
-        const updatedCount = await Message.markAsSeen(partnerId, viewerId);
-        
-        if (updatedCount > 0) {
-          const partnerSocketId = getReceiverSocketId(partnerId);
-          if (partnerSocketId) {
-            io.to(partnerSocketId).emit("message_seen", { partnerId: viewerId });
-          }
-        }
-      } catch (err) {
-        console.error("mark_seen error:", err.message);
-      }
-    });
-
     // Handle typing indicators
     socket.on("typing_start", ({ receiverId }) => {
       const receiverSocketId = getReceiverSocketId(receiverId);
@@ -62,110 +40,6 @@ function initializeSocketIO(server) {
       const receiverSocketId = getReceiverSocketId(receiverId);
       if (receiverSocketId) {
         io.to(receiverSocketId).emit("typing_stop", { senderId: userId });
-      }
-    });
-
-    // Handle new message
-    socket.on("send_message", async (messageData) => {
-      try {
-        const message = await Message.create({
-          sender: messageData.sender,
-          receiver: messageData.receiver,
-          text: messageData.text,
-          replyTo: messageData.replyTo,
-          image: messageData.image
-        });
-
-        // Get sender and receiver socket IDs
-        const senderSocketId = getReceiverSocketId(messageData.sender);
-        const receiverSocketId = getReceiverSocketId(messageData.receiver);
-
-        // Send to receiver if online
-        if (receiverSocketId) {
-          io.to(receiverSocketId).emit("newMessage", message.toJSON());
-        }
-
-        // Send confirmation to sender
-        if (senderSocketId) {
-          io.to(senderSocketId).emit("message_sent", message.toJSON());
-        }
-
-        // Update message status to delivered
-        if (receiverSocketId) {
-          await Message.updateStatus(message.id, 'delivered');
-          io.to(receiverSocketId).emit("message_delivered", { messageId: message.id });
-        }
-
-      } catch (err) {
-        console.error("send_message error:", err.message);
-        const senderSocketId = getReceiverSocketId(messageData.sender);
-        if (senderSocketId) {
-          io.to(senderSocketId).emit("message_error", { error: "Failed to send message" });
-        }
-      }
-    });
-
-    // Handle message deletion
-    socket.on("delete_message", async ({ messageId, deleteType, userId: requesterId }) => {
-      // Security check
-      if (String(userId) !== String(requesterId)) {
-        console.warn(`[SECURITY] Socket ${socket.id} attempted to delete message for user ${requesterId}`);
-        return;
-      }
-
-      try {
-        const message = await Message.getById(messageId);
-        if (!message) return;
-
-        if (deleteType === "everyone") {
-          // Only sender can delete for everyone
-          if (message.sender !== requesterId) {
-            return;
-          }
-          await Message.deleteForEveryone(messageId);
-          
-          // Notify both users
-          const senderSocketId = getReceiverSocketId(message.sender);
-          const receiverSocketId = getReceiverSocketId(message.receiver);
-          
-          if (senderSocketId) {
-            io.to(senderSocketId).emit("message_deleted", { messageId, deleteType: "everyone" });
-          }
-          if (receiverSocketId) {
-            io.to(receiverSocketId).emit("message_deleted", { messageId, deleteType: "everyone" });
-          }
-        } else if (deleteType === "me") {
-          await Message.hideForUser(messageId, requesterId);
-          
-          // Only notify the requesting user
-          const userSocketId = getReceiverSocketId(requesterId);
-          if (userSocketId) {
-            io.to(userSocketId).emit("message_deleted", { messageId, deleteType: "me" });
-          }
-        }
-      } catch (err) {
-        console.error("delete_message error:", err.message);
-      }
-    });
-
-    // Handle conversation clearing
-    socket.on("clear_conversation", async ({ partnerId, userId: requesterId }) => {
-      // Security check
-      if (String(userId) !== String(requesterId)) {
-        console.warn(`[SECURITY] Socket ${socket.id} attempted to clear conversation for user ${requesterId}`);
-        return;
-      }
-
-      try {
-        await Message.clearConversation(requesterId, partnerId);
-        
-        // Notify the user who cleared the conversation
-        const userSocketId = getReceiverSocketId(requesterId);
-        if (userSocketId) {
-          io.to(userSocketId).emit("conversation_cleared", { partnerId });
-        }
-      } catch (err) {
-        console.error("clear_conversation error:", err.message);
       }
     });
 
