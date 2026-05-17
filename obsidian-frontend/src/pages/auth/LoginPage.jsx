@@ -21,6 +21,7 @@ export default function LoginPage() {
   const demoAccounts = [
     { email: "student@vnrvjiet.in", password: "demo123", role: "Student", id: "STU001" },
     { email: "mentor@vnrvjiet.in", password: "demo123", role: "Alumni", id: "ALU001" },
+    { email: "admin@vnrvjiet.in", password: "adminpassword123", role: "Admin", id: "ADM001" },
   ];
 
   const handleSubmit = async (e) => {
@@ -110,38 +111,38 @@ export default function LoginPage() {
           position: relative;
           z-index: 10;
           width: 100%;
-          max-width: 440px;
-          margin: 24px;
+          max-width: 352px;
+          margin: 20px;
           background: rgba(255,255,255,0.03);
           border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 20px;
-          padding: 40px 36px;
+          border-radius: 16px;
+          padding: 32px 28px;
           backdrop-filter: blur(24px);
-          box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+          box-shadow: 0 20px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
           animation: cardIn 0.5s cubic-bezier(0.22,1,0.36,1) both;
         }
 
         @keyframes cardIn {
-          from { opacity: 0; transform: translateY(24px) scale(0.97); }
+          from { opacity: 0; transform: translateY(20px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .login-logo {
-          width: 48px;
-          height: 48px;
+          width: 38px;
+          height: 38px;
           background: linear-gradient(135deg, #6366f1, #8b5cf6);
-          border-radius: 14px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          margin: 0 auto 20px;
-          font-size: 22px;
-          box-shadow: 0 8px 24px rgba(99,102,241,0.35);
+          margin: 0 auto 16px;
+          font-size: 18px;
+          box-shadow: 0 6px 18px rgba(99,102,241,0.35);
         }
 
         .login-title {
           text-align: center;
-          font-size: 22px;
+          font-size: 18px;
           font-weight: 700;
           color: #f0f0ff;
           letter-spacing: -0.3px;
@@ -150,9 +151,9 @@ export default function LoginPage() {
 
         .login-subtitle {
           text-align: center;
-          font-size: 13px;
+          font-size: 11px;
           color: rgba(255,255,255,0.4);
-          margin-bottom: 28px;
+          margin-bottom: 22px;
         }
 
         .login-error {

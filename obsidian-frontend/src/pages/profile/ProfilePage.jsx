@@ -31,11 +31,12 @@ export default function ProfilePage() {
 
   useEffect(() => {
     loadProfileData();
-  }, [user]);
+  }, [user, uid]);
 
   async function loadProfileData() {
     try {
-      const profileData = await fetchApi("/profiles/me");
+      const endpoint = uid && uid !== user?.id ? `/profiles/${uid}` : "/profiles/me";
+      const profileData = await fetchApi(endpoint);
       
       // Check if profile data exists
       if (!profileData || !profileData.profile) {
@@ -63,25 +64,28 @@ export default function ProfilePage() {
       setProfile(profileData.profile);
       setEditForm(profileData.profile);
 
+      const targetRole = profileData.profile.role;
+      const targetId = profileData.profile.user_id || profileData.profile.id;
+
       const projectsData = await fetchApi("/projects");
       
-      // Role-based project filtering
-      if (user?.role === "student") {
-        const myProjects = projectsData.projects.filter(p => 
-          p.members.some(m => m.student_id === user?.id)
+      // Role-based project filtering for the viewed profile
+      if (targetRole === "student") {
+        const studentProjects = projectsData.projects.filter(p => 
+          p.members.some(m => m.student_id === targetId)
         );
-        setProjects(myProjects);
-      } else if (user?.role === "alumni") {
-        const mentoredProjects = projectsData.projects.filter(p => p.mentor_id === user?.id);
+        setProjects(studentProjects);
+      } else if (targetRole === "alumni") {
+        const mentoredProjects = projectsData.projects.filter(p => p.mentor_id === targetId);
         setProjects(mentoredProjects);
         
-        // Fetch referrals for alumni (mock for now, needs backend endpoint)
-        try {
-          // This endpoint doesn't exist yet, so we'll handle gracefully
-          const referralsData = await fetchApi("/referrals").catch(() => ({ referrals: [] }));
-          setReferrals(referralsData.referrals || []);
-        } catch {
-          setReferrals([]);
+        if (isOwnProfile) {
+          try {
+            const referralsData = await fetchApi("/referrals").catch(() => ({ referrals: [] }));
+            setReferrals(referralsData.referrals || []);
+          } catch {
+            setReferrals([]);
+          }
         }
       } else {
         setProjects(projectsData.projects);
@@ -207,6 +211,7 @@ export default function ProfilePage() {
         profile={isEditing ? editForm : profile} 
         user={user} 
         isEditing={isEditing}
+        isOwnProfile={isOwnProfile}
         onToggleEdit={() => {
           if (isEditing) {
             handleSaveProfile();
@@ -345,7 +350,7 @@ function AboutSection({ profile, isEditing, onChange }) {
         <textarea
           value={profile.bio || ""}
           onChange={(e) => onChange("bio", e.target.value)}
-          placeholder="Tell us about yourself..."
+          placeholder="Tell us about yourself, your goals, and what you're passionate about..."
           style={{
             width: "100%",
             minHeight: "80px",
@@ -372,7 +377,7 @@ function AboutSection({ profile, isEditing, onChange }) {
                 type="text"
                 value={profile.education || ""}
                 onChange={(e) => onChange("education", e.target.value)}
-                placeholder="VNR VJIET"
+                placeholder="e.g., VNR VJIET, B.Tech CSE"
                 style={{
                   width: "100%",
                   padding: "8px",
@@ -388,7 +393,7 @@ function AboutSection({ profile, isEditing, onChange }) {
                 type="text"
                 value={profile.company || ""}
                 onChange={(e) => onChange("company", e.target.value)}
-                placeholder="Company name"
+                placeholder="e.g., Google (Intern) or N/A"
                 style={{
                   width: "100%",
                   padding: "8px",
@@ -462,7 +467,7 @@ function SkillsSection({ profile, isEditing, onAddSkill, onRemoveSkill }) {
               value={newSkill}
               onChange={(e) => setNewSkill(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleAddClick()}
-              placeholder="Add a skill..."
+              placeholder="e.g., React, Python, Machine Learning..."
               style={{
                 flex: 1,
                 padding: "8px 12px",
@@ -1181,7 +1186,7 @@ function AlumniAboutSection({ profile, user, isEditing, onChange }) {
                 type="text"
                 value={profile.company || ""}
                 onChange={(e) => onChange("company", e.target.value)}
-                placeholder="Company name"
+                placeholder="e.g., Microsoft, Google, Startup Inc."
                 style={{
                   width: "100%",
                   padding: "8px",
@@ -1197,7 +1202,7 @@ function AlumniAboutSection({ profile, user, isEditing, onChange }) {
                 type="text"
                 value={profile.job_role || ""}
                 onChange={(e) => onChange("job_role", e.target.value)}
-                placeholder="Your designation"
+                placeholder="e.g., Senior Software Engineer, Product Manager"
                 style={{
                   width: "100%",
                   padding: "8px",
@@ -1213,7 +1218,7 @@ function AlumniAboutSection({ profile, user, isEditing, onChange }) {
                 type="text"
                 value={profile.education || ""}
                 onChange={(e) => onChange("education", e.target.value)}
-                placeholder="VNR VJIET"
+                placeholder="e.g., VNR VJIET"
                 style={{
                   width: "100%",
                   padding: "8px",
@@ -1257,7 +1262,7 @@ function AlumniAboutSection({ profile, user, isEditing, onChange }) {
             <textarea
               value={profile.bio || ""}
               onChange={(e) => onChange("bio", e.target.value)}
-              placeholder="Share your professional experience and mentorship approach..."
+              placeholder="Share your professional journey, expertise, and what kind of mentorship you can offer..."
               style={{
                 width: "100%",
                 minHeight: "80px",
@@ -1682,7 +1687,7 @@ function AdminQuickActionsCard() {
 
 // ==================== SHARED COMPONENTS ====================
 
-function ProfileHeader({ profile, user, isEditing, onToggleEdit, onCancel, onChange }) {
+function ProfileHeader({ profile, user, isEditing, isOwnProfile, onToggleEdit, onCancel, onChange }) {
   return (
     <div style={{
       background: "#fff",
@@ -1731,6 +1736,7 @@ function ProfileHeader({ profile, user, isEditing, onToggleEdit, onCancel, onCha
                 type="text"
                 value={profile.name || ""}
                 onChange={(e) => onChange("name", e.target.value)}
+                placeholder="Enter your full name (e.g., John Doe)"
                 style={{
                   fontSize: "28px",
                   fontWeight: "700",
@@ -1754,12 +1760,12 @@ function ProfileHeader({ profile, user, isEditing, onToggleEdit, onCancel, onCha
                 borderRadius: "16px",
                 fontSize: "12px",
                 fontWeight: "600",
-                background: user?.role === "student" ? "#DBEAFE" : user?.role === "alumni" ? "#EDE9FE" : "#FEE2E2",
-                color: user?.role === "student" ? "#1E40AF" : user?.role === "alumni" ? "#6B21A8" : "#991B1B"
+                background: profile?.role === "student" ? "#DBEAFE" : profile?.role === "alumni" ? "#EDE9FE" : "#FEE2E2",
+                color: profile?.role === "student" ? "#1E40AF" : profile?.role === "alumni" ? "#6B21A8" : "#991B1B"
               }}>
-                {user?.role === "student" ? "Student" : user?.role === "alumni" ? "Alumni / Mentor" : "Admin"}
+                {profile?.role === "student" ? "Student" : profile?.role === "alumni" ? "Alumni / Mentor" : "Admin"}
               </span>
-              {user?.role === "alumni" && profile.company && (
+              {profile?.role === "alumni" && profile.company && (
                 <span style={{
                   padding: "4px 12px",
                   borderRadius: "16px",
@@ -1805,25 +1811,27 @@ function ProfileHeader({ profile, user, isEditing, onToggleEdit, onCancel, onCha
               Cancel
             </button>
           )}
-          <button
-            onClick={onToggleEdit}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 16px",
-              borderRadius: "8px",
-              border: "1px solid #E5E7EB",
-              background: isEditing ? "#6366F1" : "#fff",
-              color: isEditing ? "#fff" : "#374151",
-              cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: "500"
-            }}
-          >
-            {isEditing ? <Save size={16} /> : <Edit2 size={16} />}
-            {isEditing ? "Save Profile" : "Edit Profile"}
-          </button>
+          {isOwnProfile && (
+            <button
+              onClick={onToggleEdit}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "8px 16px",
+                borderRadius: "8px",
+                border: "1px solid #E5E7EB",
+                background: isEditing ? "#6366F1" : "#fff",
+                color: isEditing ? "#fff" : "#374151",
+                cursor: "pointer",
+                fontSize: "14px",
+                fontWeight: "500"
+              }}
+            >
+              {isEditing ? <Save size={16} /> : <Edit2 size={16} />}
+              {isEditing ? "Save Profile" : "Edit Profile"}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -1964,14 +1972,17 @@ function ErrorState() {
 // ==================== HELPERS ====================
 
 function calculateStats(user, projects, profile) {
-  if (user?.role === "student") {
+  const role = profile?.role || profile?.tags?.[0];
+  const profileId = profile?.user_id || profile?.id;
+
+  if (role === "student") {
     const totalScore = projects.reduce((sum, p) => {
-      const member = p.members.find(m => m.student_id === user.id);
+      const member = p.members.find(m => m.student_id === profileId);
       return sum + (member?.contribution_score || 0);
     }, 0);
     
     const stars = projects.filter(p =>
-      p.members.find(m => m.student_id === user.id)?.star_awarded
+      p.members.find(m => m.student_id === profileId)?.star_awarded
     ).length;
 
     return {
@@ -1982,7 +1993,7 @@ function calculateStats(user, projects, profile) {
     };
   }
 
-  if (user?.role === "alumni") {
+  if (role === "alumni") {
     const students = new Set(projects.flatMap(p => p.members.map(m => m.student_id))).size;
     return {
       students,

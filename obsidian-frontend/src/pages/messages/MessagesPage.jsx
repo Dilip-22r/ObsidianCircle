@@ -769,7 +769,7 @@ function Messages() {
               <Search size={18} />
               <input
                 type="text"
-                placeholder="Search conversations..."
+                placeholder="Search by name or message content..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -878,7 +878,7 @@ function Messages() {
                   type="text"
                   value={text}
                   onChange={handleInputChange}
-                  placeholder="Type a message..."
+                  placeholder="Type your message here..."
                 />
                 <button type="submit" disabled={!text.trim() && !loading}>
                   <Send size={18} />

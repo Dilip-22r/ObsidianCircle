@@ -28,7 +28,6 @@ export default function ProjectsPage() {
   async function handleJoinProject(projectId) {
     try {
       await fetchApi(`/projects/${projectId}/join`, { method: "POST" });
-      alert("Successfully joined project!");
       loadProjects();
     } catch (err) {
       alert(err.message || "Failed to join project");
@@ -36,6 +35,9 @@ export default function ProjectsPage() {
   }
 
   const filteredProjects = projects.filter(p => {
+    if (filter === "mine") {
+      return p.members.some(m => m.student_id === user?.id) || p.mentor_id === user?.id;
+    }
     if (filter === "active") return !p.published;
     if (filter === "completed") return p.published;
     return true;
@@ -52,7 +54,7 @@ export default function ProjectsPage() {
             Projects
           </h1>
           <p style={{ fontSize: "14px", color: "#6B7280" }}>
-            {user?.role === "student" ? "Browse and join projects to build your portfolio" : "Manage and mentor student projects"}
+            {user?.role === "student" ? "Browse projects to build your portfolio" : "Manage and mentor student projects"}
           </p>
         </div>
         {(user?.role === "alumni" || user?.role === "admin") && (
@@ -80,7 +82,7 @@ export default function ProjectsPage() {
 
       {/* Filter Tabs */}
       <div style={{ display: "flex", gap: "8px", marginBottom: "24px" }}>
-        {["all", "active", "completed"].map(f => (
+        {["all", "mine", "active", "completed"].map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -96,7 +98,7 @@ export default function ProjectsPage() {
               textTransform: "capitalize"
             }}
           >
-            {f}
+            {f === "mine" ? "My Projects" : f}
           </button>
         ))}
       </div>
@@ -180,46 +182,43 @@ function ProjectCard({ project, userRole, userId, onJoin }) {
         </div>
       </div>
 
-      {project.repo_url && (
-        <a
-          href={project.repo_url}
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            fontSize: "13px",
-            color: "#6366F1",
-            textDecoration: "none",
-            fontWeight: "500"
-          }}
-        >
-          <Github size={14} />
-          View Repository
-        </a>
-      )}
 
-      {userRole === "student" && !isMember && !project.published && (
+
+      {(userRole === "student" || isMember) && !project.published && (
         <button
-          onClick={onJoin}
+          onClick={() => {
+            if (userRole === "student" && !isMember) {
+              onJoin();
+            }
+            if (project.repo_url) {
+              window.open(project.repo_url, "_blank");
+            } else {
+              alert("No repository link provided for this project.");
+            }
+          }}
           style={{
             marginTop: "8px",
-            padding: "8px 16px",
-            background: "#6366F1",
+            padding: "10px 16px",
+            background: isMember ? "#10B981" : "#6366F1",
             color: "#fff",
             border: "none",
-            borderRadius: "6px",
+            borderRadius: "8px",
             cursor: "pointer",
             fontSize: "14px",
-            fontWeight: "600"
+            fontWeight: "700",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            transition: "all 0.2s"
           }}
         >
-          Join Project
+          <Github size={18} />
+          View Project
         </button>
       )}
 
-      {isMember && (
+      {project.published && (
         <div style={{
           marginTop: "8px",
           padding: "8px 12px",
@@ -228,14 +227,9 @@ function ProjectCard({ project, userRole, userId, onJoin }) {
           borderRadius: "6px",
           fontSize: "13px",
           fontWeight: "600",
-          textAlign: "center",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "6px"
+          textAlign: "center"
         }}>
-          <Award size={14} />
-          You're a member
+          Project Completed
         </div>
       )}
     </div>
@@ -289,14 +283,14 @@ function CreateProjectModal({ onClose }) {
         <form onSubmit={handleSubmit}>
           <input
             type="text"
-            placeholder="Project Title"
+            placeholder="e.g., Smart Attendance System, E-commerce App"
             value={formData.title}
             onChange={e => setFormData({ ...formData, title: e.target.value })}
             required
             style={inputStyle}
           />
           <textarea
-            placeholder="Project Description"
+            placeholder="Describe your project, the tech stack used, and what you aim to achieve..."
             value={formData.description}
             onChange={e => setFormData({ ...formData, description: e.target.value })}
             required
@@ -304,14 +298,14 @@ function CreateProjectModal({ onClose }) {
           />
           <input
             type="url"
-            placeholder="GitHub Repository URL (optional)"
+            placeholder="e.g., https://github.com/username/project-name (optional)"
             value={formData.repo_url}
             onChange={e => setFormData({ ...formData, repo_url: e.target.value })}
             style={inputStyle}
           />
           <input
             type="number"
-            placeholder="Total Score"
+            placeholder="Total Score (e.g., 100)"
             value={formData.total_score}
             onChange={e => setFormData({ ...formData, total_score: Number(e.target.value) })}
             min="0"

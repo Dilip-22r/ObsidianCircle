@@ -195,7 +195,7 @@ export default function CommunitiesPage() {
               <Search size={15} color="#667781" style={{ marginLeft: "12px" }} />
               <input
                 type="text"
-                placeholder="Search chats or people"
+                placeholder="Search communities or members..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={searchInputStyle}
@@ -430,7 +430,7 @@ export default function CommunitiesPage() {
 
             <input
               type="text"
-              placeholder="Type a message"
+              placeholder="Type your message here..."
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               onKeyPress={(e) => {
@@ -618,7 +618,7 @@ function MessageBubble({ message, isOwn }) {
       }}>
         {!isOwn && (
           <div 
-            onClick={() => message.sender_id && (window.location.href = `/profile/${message.sender_id}`)}
+            onClick={() => message.sender_id && navigate(`/profile/${message.sender_id}`)}
             style={{
               fontSize: "13px",
               fontWeight: "600",

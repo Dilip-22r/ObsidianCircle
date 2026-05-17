@@ -314,7 +314,7 @@ function RequestReferralModal({ projects, onClose }) {
           {selectedProject && (
             <input
               type="number"
-              placeholder="Mentor ID"
+              placeholder="Mentor ID (e.g., 20240001)"
               value={formData.mentor_id}
               onChange={e => setFormData({ ...formData, mentor_id: e.target.value })}
               required
@@ -331,7 +331,7 @@ function RequestReferralModal({ projects, onClose }) {
           )}
 
           <textarea
-            placeholder="Add a note (optional)"
+            placeholder="Briefly explain why you are requesting this referral..."
             value={formData.notes}
             onChange={e => setFormData({ ...formData, notes: e.target.value })}
             style={{

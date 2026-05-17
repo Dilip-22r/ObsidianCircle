@@ -1,19 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { fetchApi } from "../../hooks/useFetch";
 import { Search, User, Briefcase, Github, MapPin } from "lucide-react";
 
 export default function SearchPage() {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  async function handleSearch(e) {
-    e.preventDefault();
-    if (!query.trim()) return;
+  useEffect(() => {
+    // Load default profiles on mount
+    performSearch("");
+  }, []);
 
+  async function performSearch(searchQuery) {
     setLoading(true);
     try {
-      const data = await fetchApi(`/search?q=${encodeURIComponent(query)}`);
+      const data = await fetchApi(`/search?q=${encodeURIComponent(searchQuery)}`);
       setResults(data.results || []);
     } catch (err) {
       console.error("Search failed", err);
@@ -21,6 +25,11 @@ export default function SearchPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSearch(e) {
+    e.preventDefault();
+    performSearch(query);
   }
 
   return (
@@ -47,7 +56,7 @@ export default function SearchPage() {
           <Search size={20} color="#6B7280" />
           <input
             type="text"
-            placeholder="Search by name, skills, bio..."
+            placeholder="Search for students, alumni, skills, or projects..."
             value={query}
             onChange={e => setQuery(e.target.value)}
             style={{
@@ -114,6 +123,7 @@ export default function SearchPage() {
 }
 
 function ProfileCard({ profile }) {
+  const navigate = useNavigate();
   return (
     <div style={{
       background: "#fff",
@@ -216,17 +226,20 @@ function ProfileCard({ profile }) {
 
       {/* Actions */}
       <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-        <button style={{
-          flex: 1,
-          padding: "8px 12px",
-          background: "#6366F1",
-          color: "#fff",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-          fontSize: "13px",
-          fontWeight: "600"
-        }}>
+        <button 
+          onClick={() => navigate(`/profile/${profile.user_id}`)}
+          style={{
+            flex: 1,
+            padding: "8px 12px",
+            background: "#6366F1",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "13px",
+            fontWeight: "600"
+          }}
+        >
           View Profile
         </button>
         {profile.github_url && (

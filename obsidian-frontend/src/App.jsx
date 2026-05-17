@@ -140,6 +140,14 @@ export default function App() {
             </Suspense>
           } 
         />
+        <Route 
+          path="profile/:uid" 
+          element={
+            <Suspense fallback={<LoadingSpinner />}>
+              <ProfilePage />
+            </Suspense>
+          } 
+        />
         <Route index element={<Navigate to="dashboard" />} />
       </Route>
     </Routes>

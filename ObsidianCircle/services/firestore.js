@@ -58,7 +58,10 @@ async function updateProfile(uid, updates) {
 }
 
 async function searchProfiles(query) {
-  if (!query || query.trim().length === 0) return [];
+  if (!query || query.trim().length === 0) {
+    const snap = await db.collection('profiles').limit(20).get();
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  }
   
   const lowerQ = query.toLowerCase().trim();
   
